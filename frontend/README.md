@@ -75,14 +75,14 @@ frontend/
 -   **package.json**: Lists project dependencies, scripts, and metadata.
 -   **package-lock.json**: Records the exact version of each installed package.
 -   **public/**: Static files served directly. Place images, icons, etc. here.
--   **src/**: Main source code for the frontend React application. See `src/README.md` for detailed structure.
+-   **src/**: Main source code for the frontend React application.
 -   **vite.config.js**: Configuration file for the Vite build tool.
 
 ---
 
 ## Source Code (`src/`) Structure
 
-The `src` directory contains all source code for the React frontend. For a detailed breakdown, see [`src/README.md`](./src/README.md). Key highlights:
+The `src` directory contains all source code for the React frontend. Key highlights:
 
 -   **App.jsx / App.css**: Root React component and global styles.
 -   **assets/**: Static assets (images, SVGs, etc.).
