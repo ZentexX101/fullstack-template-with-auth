@@ -33,18 +33,18 @@ frontend/
 │       ├── Header.jsx
 │       ├── MainLayout.jsx
 │       └── Sidebar.jsx
-├── constants/           # App-wide constants
-│   └── routes.js        # Route definitions/constants
-├── context/             # React Context providers
-│   └── AuthContext.jsx  # Authentication context
-├── hooks/               # Custom React hooks
-│   └── useAuth.js       # Hook for authentication logic
-├── index.css            # Base CSS styles
-├── main.jsx             # App entry point (renders App)
-├── pages/               # Page-level components (for routing)
-│   ├── NotFound.jsx     # 404 Not Found page
-│   ├── auth/            # Auth pages (login/register)
-│   │   ├── Login.jsx    # Login page
+│   ├── constants/           # App-wide constants
+│   │   └── routes.js        # Route definitions/constants
+│   ├── context/             # React Context providers
+│   │   └── AuthContext.jsx  # Authentication context
+│   ├── hooks/               # Custom React hooks
+│   │   └── useAuth.js       # Hook for authentication logic
+│   ├── index.css            # Base CSS styles
+│   ├── main.jsx             # App entry point (renders App)
+│   ├── pages/               # Page-level components (for routing)
+│   │   ├── NotFound.jsx     # 404 Not Found page
+│   │   ├── auth/            # Auth pages (login/register)
+│   │   │   ├── Login.jsx    # Login page
 │   │   └── Register.jsx # Register page
 │   ├── dashboard/       # Dashboard pages
 │   │   ├── admin/       # Admin dashboard pages
@@ -55,14 +55,14 @@ frontend/
 │       ├── About.jsx
 │       ├── Contact.jsx
 │       └── Home.jsx
-├── routes/              # Routing logic/components
-│   ├── RoleBasedRoute.jsx # Route wrapper for role-based access
-│   └── Router.jsx       # Main router configuration
-├── services/            # API and service logic
-│   └── ApiRequestHandler.js # Handles API requests
-└── utils/               # Utility/helper functions
-    └── formatDate.js    # Date formatting utility
-├── vite.config.js       # Vite build tool configuration
+│   ├── routes/              # Routing logic/components
+│   │   ├── RoleBasedRoute.jsx # Route wrapper for role-based access
+│   │   └── Router.jsx       # Main router configuration
+│   ├── services/            # API and service logic
+│   │   └── ApiRequestHandler.js # Handles API requests
+│   └── utils/               # Utility/helper functions
+│       └── formatDate.js    # Date formatting utility
+│── vite.config.js       # Vite build tool configuration
 ```
 
 ## Folder and File Descriptions
