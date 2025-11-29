@@ -14,7 +14,7 @@ app.use(cors());
 app.use("/api/v1/", router);
 
 app.get("/", (req, res) => {
-	res.send("Welcome to Personal Finance Server V1");
+	res.send("Welcome to our Server V1");
 });
 
 // global error handler
