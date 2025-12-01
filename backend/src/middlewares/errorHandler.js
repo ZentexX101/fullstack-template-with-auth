@@ -1,75 +1,104 @@
 const { StatusCodes } = require("http-status-codes");
 
 const globalErrorHandler = (err, req, res, next) => {
-	let statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-	let message = err.message || "Internal Server Error";
-	let description = err.description || "An unexpected error occurred. Please try again later."; // Use description from AppError
-	let errors = {};
+  let statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+  let message = err.message || "Internal Server Error";
+  let description =
+    err.description || "An unexpected error occurred. Please try again later.";
+  let errors = {};
 
-	// 🔹 Handle Mongoose Validation Errors (e.g., required fields)
-	if (err.name === "ValidationError") {
-		statusCode = StatusCodes.BAD_REQUEST;
-		message = "Validation Error";
-		description =
-			"One or more required fields are invalid or missing. Please check the request body.";
-		errors = Object.keys(err.errors).reduce((acc, key) => {
-			acc[key] = err.errors[key].message;
-			return acc;
-		}, {});
-	}
+  // Extract file + line + column from stack
+  let file = null;
+  let line = null;
+  let column = null;
 
-	// 🔹 Handle Mongoose Duplicate Key Error (MongoDB E11000 error)
-	if (err.code === 11000) {
-		statusCode = StatusCodes.BAD_REQUEST;
-		message = "Duplicate Key Error";
-		description = `The value you are trying to insert already exists. Please ensure uniqueness for the field(s) '${Object.keys(
-			err.keyValue
-		).join(", ")}'.`;
-		errors = Object.keys(err.keyValue).reduce((acc, key) => {
-			acc[key] = `${key} must be unique. '${err.keyValue[key]}' already exists.`;
-			return acc;
-		}, {});
-	}
+  if (err.stack) {
+    const stackLines = err.stack.split("\n");
+    // typical format: at filePath:line:column
+    const match = stackLines[1]?.match(/\((.*):(\d+):(\d+)\)/);
 
-	// 🔹 Handle Mongoose CastErrors (Invalid ObjectId)
-	if (err.name === "CastError") {
-		statusCode = StatusCodes.BAD_REQUEST;
-		message = `Invalid ${err.path}: ${err.value}`;
-		description = `The provided ${err.path} value is not valid. Please check the format of ${err.path}.`;
-		errors[err.path] = `Invalid ${err.path}: ${err.value}`;
-	}
+    if (match) {
+      file = match[1];
+      line = match[2];
+      column = match[3];
+    }
+  }
 
-	// 🔹 Handle Mongoose Connection Errors (e.g., network issues)
-	if (err.name === "MongoNetworkError" || err.name === "MongooseServerSelectionError") {
-		statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-		message = "Database Connection Error";
-		description =
-			"There was an issue connecting to the database. Please check the network or server status.";
-	}
+  // 🔹 Mongoose Validation Errors
+  if (err.name === "ValidationError") {
+    statusCode = StatusCodes.BAD_REQUEST;
+    message = "Validation Error";
+    description =
+      "One or more required fields are invalid or missing. Please check the request body.";
+    errors = Object.keys(err.errors).reduce((acc, key) => {
+      acc[key] = err.errors[key].message;
+      return acc;
+    }, {});
+  }
 
-	// 🔹 Handle Mongoose Timeout Errors (Database Timeout)
-	if (err.name === "MongoTimeoutError") {
-		statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-		message = "Database Timeout Error";
-		description = "The database request timed out. Please try again later.";
-	}
+  // 🔹 Duplicate key
+  if (err.code === 11000) {
+    statusCode = StatusCodes.BAD_REQUEST;
+    message = "Duplicate Key Error";
+    description = `Duplicate value exists for '${Object.keys(err.keyValue).join(
+      ", "
+    )}'`;
+    errors = Object.keys(err.keyValue).reduce((acc, key) => {
+      acc[
+        key
+      ] = `${key} must be unique. '${err.keyValue[key]}' already exists.`;
+      return acc;
+    }, {});
+  }
 
-	// 🔹 Handle Other Mongoose Errors (Uncategorized MongoDB Errors)
-	if (err.name === "MongoError") {
-		statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-		message = "Database Error";
-		description = "An unknown database error occurred. Please check the logs for more details.";
-	}
+  // 🔹 CastError (invalid ObjectId)
+  if (err.name === "CastError") {
+    statusCode = StatusCodes.BAD_REQUEST;
+    message = `Invalid ${err.path}: ${err.value}`;
+    description = `The provided ${err.path} value is not valid.`;
+    errors[err.path] = `Invalid ${err.path}: ${err.value}`;
+  }
 
-	res.status(statusCode).json({
-		success: false,
-		message,
-		error: {
-			code: statusCode,
-			description: err._message || description || "Something went wrong on the server.",
-			details: Object.keys(errors).length ? errors : undefined, // Include specific errors if present
-		},
-	});
+  // 🔹 DB Connection Errors
+  if (
+    err.name === "MongoNetworkError" ||
+    err.name === "MongooseServerSelectionError"
+  ) {
+    statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    message = "Database Connection Error";
+    description = "Unable to connect to database. Check server/network.";
+  }
+
+  // 🔹 Timeout
+  if (err.name === "MongoTimeoutError") {
+    statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    message = "Database Timeout";
+    description = "Database request timed out.";
+  }
+
+  // 🔹 Other Mongo errors
+  if (err.name === "MongoError") {
+    statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    message = "Database Error";
+    description = "Unknown database error occurred.";
+  }
+
+  res.status(statusCode).json({
+    success: false,
+    message,
+    error: {
+      code: statusCode,
+      description: err._message || description,
+      details: Object.keys(errors).length ? errors : undefined,
+      location: file
+        ? {
+            file,
+            line: Number(line),
+            column: Number(column),
+          }
+        : undefined,
+    },
+  });
 };
 
 module.exports = globalErrorHandler;
