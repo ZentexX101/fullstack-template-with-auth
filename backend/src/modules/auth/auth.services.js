@@ -6,7 +6,7 @@ const OtpModel = require("../../helper/otpSchema");
 const { oauth2Client } = require("../../helper/utils/googleConfig"); // Google OAuth2 client configuration
 const { default: axios } = require("axios"); // Axios for making HTTP requests
 const { sendMailForOTP } = require("../../helper/mailing");
-
+const { htmlTemplate } = require("../../helper/emailTemplate/otpTemplate");
 
 //  Generates a random password with a given length, defaulting to 8 characters.
 //  The password includes letters, numbers, and special characters.
@@ -23,7 +23,6 @@ const generateRandomPassword = (length = 8) => {
 
   return password;
 };
-
 
 // Creates a new user in the database.
 // The user data containing name, email, password, etc.
@@ -80,17 +79,16 @@ const loginWithGoogle = async (data) => {
   }
 
   // If user doesn't exist, create a new one
-  const password = generateRandomPassword(); 
+  const password = generateRandomPassword();
   user = await User.create({ email, name, password, googleId: id });
 
   if (!user) {
     throw new AppError(StatusCodes.NOT_FOUND, "User not created successfully");
   }
 
-  const token = generateToken(user._id, user.role);
+  const token = generateToken(user.userId, user.role);
   return { token, user };
 };
-
 
 // Get the user profile from database
 // The user object containing the user's id and role.
@@ -128,7 +126,6 @@ const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-
 // Sends an OTP email to the user for password reset.
 const sendOtp = async (email) => {
   const otp = generateOtp();
@@ -141,102 +138,13 @@ const sendOtp = async (email) => {
   await record.save();
 
   // HTML template for the OTP email
-  const htmlTemplate = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>OTP Email</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background-color: #f0f8ff;
-                margin: 0;
-                padding: 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-            }
-            .container {
-                max-width: 600px;
-                width: 100%;
-                background-color: rgba(255, 255, 255, 0.7);
-                padding: 20px;
-                border-radius: 16px;
-                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                margin: 20px;
-            }
-            .header {
-                text-align: center;
-                padding: 20px 0;
-                border-bottom: 1px solid #dddddd;
-            }
-            .header h1 {
-                font-size: 24px;
-                color: #333333;
-            }
-            .content {
-                padding: 20px;
-                text-align: center;
-            }
-            .content p {
-                font-size: 18px;
-                color: #555555;
-            }
-            .otp-box {
-                display: inline-block;
-                padding: 15px 30px;
-                border-radius: 8px;
-                background: linear-gradient(145deg, #e0f7fa, #ffffff);
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                margin: 20px 0;
-            }
-            .otp {
-                font-size: 24px;
-                color: #333333;
-                font-weight: bold;
-                letter-spacing: 2px;
-            }
-            .footer {
-                text-align: center;
-                padding: 10px 0;
-                border-top: 1px solid #dddddd;
-                margin-top: 20px;
-                color: #999999;
-                font-size: 14px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>Password Reset OTP</h1>
-            </div>
-            <div class="content">
-                <p>Your OTP for password reset is:</p>
-                <div class="otp-box">
-                    <span class="otp">${otp}</span>
-                </div>
-                <p>This OTP is valid for 10 minutes. Please use it promptly.</p>
-            </div>
-            <div class="footer">
-                <p>If you did not request this, please ignore this email.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-  `;
 
   // Send the OTP email to the user using the sendMailForOTP function
   await sendMailForOTP(
     email,
     "Password Reset OTP",
     `Your OTP is: ${otp}`,
-    htmlTemplate
+    htmlTemplate(otp)
   );
   console.log(`OTP sent to: ${email}`);
   return otp;
@@ -250,7 +158,7 @@ const verifyOtp = async (email, otp) => {
   if (record && record.expiresAt > new Date()) {
     // Delete the OTP record after it has been successfully used
     await OtpModel.deleteOne({ _id: record._id });
-    return true; 
+    return true;
   }
 
   // Return false if OTP is invalid or expired
@@ -261,9 +169,9 @@ const verifyOtp = async (email, otp) => {
 const resetPassword = async (email, newPassword) => {
   // Attempt to find and update the user
   const updatedUser = await User.findOneAndUpdate(
-    { email: email }, 
-    { password: newPassword }, 
-    { new: true } 
+    { email: email },
+    { password: newPassword },
+    { new: true }
   );
 
   if (!updatedUser) {

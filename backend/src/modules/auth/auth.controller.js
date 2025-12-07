@@ -33,15 +33,7 @@ const loginWithGoogleHandler = catchAsync(async (req, res) => {
   });
 });
 
-const getUserHandler = catchAsync(async (req, res) => {
-  const result = await userServices.getUser(req.user);
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: "User retrieved successfully",
-    data: result,
-  });
-});
+
 
 // Forgot password handler
 const forgotPassword = catchAsync(async (req, res) => {
@@ -104,7 +96,6 @@ const resetPassword = catchAsync(async (req, res) => {
 module.exports = {
   createUserHandler,
   userLoginHandler,
-  getUserHandler,
   loginWithGoogleHandler,
   verifyOtp,
   resetPassword,
