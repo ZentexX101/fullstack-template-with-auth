@@ -8,6 +8,8 @@ import Login from "../pages/auth/Login";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import VerifyOtp from "../pages/auth/VerifyOtp";
 import ResetPassword from "../pages/auth/ResetPassword";
+import DashboardLayout from "../components/layouts/DashboardLayout";
+import AdminHome from "../pages/dashboard/admin/AdminHome";
 
 const Router = () => {
   return (
@@ -21,6 +23,9 @@ const Router = () => {
         <Route path="forget-password" element={<ForgotPassword />} />
         <Route path="verify-otp" element={<VerifyOtp />} />
         <Route path="reset-password" element={<ResetPassword />} />
+      </Route>
+      <Route path="dashboard" element={<DashboardLayout />}>
+        <Route index element={<AdminHome />} />
       </Route>
     </Routes>
   );
