@@ -1,14 +1,14 @@
 const nodemailer = require("nodemailer");
+const config = require("../config/config");
 
 // Create a transporter object using the default SMTP transport with Gmail service
 const transporter = nodemailer.createTransport({
-	// service: 'gmail',
-	host: "smtp.gmail.com",
-
-	auth: {
-		user: process.env.user, // Your Gmail address from environment variables
-		pass: process.env.pass, // Your Gmail password from environment variables
-	},
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  auth: {
+    user: config.user,
+    pass: config.pass,
+  },
 });
 
 /**
@@ -19,26 +19,22 @@ const transporter = nodemailer.createTransport({
  * @returns {Promise} - Promise representing the result of the email send operation
  */
 const sendMailForOTP = async (to, subject, text, html = "") => {
-	const mailOptions = {
-		from: "themarketingteam@summitstrike.com", // Sender address
-		// from: process.env.user, // Sender address
+  const mailOptions = {
+    from: "rh491464@gmail.com",
+    to, // Recipient address
+    subject, // Subject line
+    text, // Plain text body
+    html, // HTML body
+  };
 
-		to, // Recipient address
-		subject, // Subject line
-		text, // Plain text body
-		html, // HTML body
-	};
-
-	// Log mail options for debugging purposes
-	try {
-		// Send mail using the transporter object
-		const info = await transporter.sendMail(mailOptions);
-		return info; // Return the result of the send operation
-	} catch (error) {
-		// Throw error if sending fails
-		// biome-ignore lint/complexity/noUselessCatch: <explanation>
-		throw error;
-	}
+  // Log mail options for debugging purposes
+  try {
+    // Send mail using the transporter object
+    const info = await transporter.sendMail(mailOptions);
+    return info; // Return the result of the send operation
+  } catch (error) {
+    throw error;
+  }
 };
 
 module.exports = { sendMailForOTP };

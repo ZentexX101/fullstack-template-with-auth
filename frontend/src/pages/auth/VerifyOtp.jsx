@@ -15,7 +15,7 @@ const VerifyOtp = () => {
   const mutation = useMutation({
     mutationFn: async (data) => {
       const response = await apiRequestHandler(
-        "/auth/forgot-password",
+        "/auth/verify-otp",
         "POST",
         data
       );
@@ -41,7 +41,7 @@ const VerifyOtp = () => {
       toast.error("Please enter a valid code");
       return;
     }
-    const verifyData = { email, code };
+    const verifyData = { email, otp: code };
 
     // navigate("/reset-password");
     await mutation.mutateAsync(verifyData);

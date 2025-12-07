@@ -18,15 +18,15 @@ const Router = () => {
         <Route index element={<Home />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
-        <Route path="register" element={<Register />} />
-        <Route path="login" element={<Login />} />
-        <Route path="forget-password" element={<ForgotPassword />} />
-        <Route path="verify-otp" element={<VerifyOtp />} />
-        <Route path="reset-password" element={<ResetPassword />} />
       </Route>
       <Route path="dashboard" element={<DashboardLayout />}>
         <Route index element={<AdminHome />} />
       </Route>
+      <Route path="register" element={<Register />} />
+      <Route path="login" element={<Login />} />
+      <Route path="forget-password" element={<ForgotPassword />} />
+      <Route path="verify-otp" element={<VerifyOtp />} />
+      <Route path="reset-password" element={<ResetPassword />} />
     </Routes>
   );
 };
