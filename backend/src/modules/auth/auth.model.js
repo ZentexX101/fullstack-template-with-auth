@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
 const customIdGenerator = require("../../utils/customIdGenerator");
+const bcrypt = require("bcryptjs");
 
 const UserSchema = new mongoose.Schema(
   {
     userId: { type: String, unique: true },
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
+    firstName: { type: String },
+    lastName: { type: String },
     email: { type: String, required: true, unique: true },
     password: { type: String, default: null },
-    googleId: { type: String, default: null, unique: true },
+    googleId: { type: String, default: null },
     role: { type: String, enum: ["user", "admin"], default: "user" },
   },
   { timestamps: true }

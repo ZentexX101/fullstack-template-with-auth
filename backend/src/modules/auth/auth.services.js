@@ -7,6 +7,7 @@ const { oauth2Client } = require("../../helper/utils/googleConfig"); // Google O
 const { default: axios } = require("axios"); // Axios for making HTTP requests
 const { sendMailForOTP } = require("../../helper/mailing");
 const { htmlTemplate } = require("../../helper/emailTemplate/otpTemplate");
+const bcrypt = require("bcryptjs");
 
 //  Generates a random password with a given length, defaulting to 8 characters.
 //  The password includes letters, numbers, and special characters.
@@ -42,7 +43,15 @@ const userLogin = async (data) => {
   // Find the user by email and explicitly select the password field
   const user = await User.findOne({ email: data.email }).select("+password");
 
-  if (!user || data.password !== user.password) {
+  // If user not found, stop early
+  if (!user) {
+    throw new AppError(StatusCodes.UNAUTHORIZED, "Invalid email or password.");
+  }
+
+  // Compare entered password with stored hashed password
+  const isPasswordMatch = await bcrypt.compare(data.password, user.password);
+
+  if (!isPasswordMatch) {
     throw new AppError(StatusCodes.UNAUTHORIZED, "Invalid email or password.");
   }
 
@@ -51,7 +60,7 @@ const userLogin = async (data) => {
 
   const token = generateToken(user._id, user.role);
 
-  return { token, role: user.role, user: userWithoutPassword };
+  return { token, user: userWithoutPassword };
 };
 
 // Logs in or registers a user via Google OAuth.
@@ -165,26 +174,48 @@ const verifyOtp = async (email, otp) => {
   return false;
 };
 
-// function to reset password
-const resetPassword = async (email, newPassword) => {
-  // Attempt to find and update the user
-  const updatedUser = await User.findOneAndUpdate(
-    { email: email },
-    { password: newPassword },
-    { new: true }
-  );
-
-  if (!updatedUser) {
+// function to reset password (securely hashes the new password)
+const resetPassword = async (rawEmail, newPassword) => {
+  if (!rawEmail || !newPassword) {
     throw new AppError(
-      StatusCodes.NOT_FOUND,
-      `User with email "${email}" not found.`
+      StatusCodes.BAD_REQUEST,
+      "Invalid request.",
+      "Both email and new password are required."
     );
   }
 
+  // Basic password rule (matches your schema minLength: 8)
+  if (newPassword.length < 8) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      "Password too short.",
+      "Password must be at least 8 characters long."
+    );
+  }
+
+  const email = String(rawEmail).toLowerCase().trim();
+
+  // Find active user and include password so pre('save') can replace it
+  const user = await User.findOne({ email }).select("+password");
+  if (!user) {
+    throw new AppError(
+      StatusCodes.NOT_FOUND,
+      "User not found.",
+      `The user with email "${email}" does not exist.`
+    );
+  }
+
+  // Assign and save to trigger the pre('save') hash hook
+  user.password = newPassword;
+  await user.save();
+
+  // (Optional) If you keep OTPs in a separate collection, you could clear any leftovers:
+  await OtpModel.deleteMany({ email });
+
   return {
+    status: StatusCodes.OK,
     message: "Password reset successfully.",
-    email: updatedUser.email,
-    password: "****", // Mask the password for security reasons
+    email: user.email,
   };
 };
 

@@ -24,7 +24,7 @@ const ResetPassword = () => {
     mutationFn: async (data) => {
       const response = await apiRequestHandler(
         "/auth/reset-password",
-        "PUT",
+        "POST",
         data
       );
       return response;

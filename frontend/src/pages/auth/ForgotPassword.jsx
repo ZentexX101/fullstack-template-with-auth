@@ -47,7 +47,6 @@ const ForgotPassword = () => {
   return (
     <div className="flex items-center  justify-center min-h-screen font-jakarta">
       <section className="max-w-md max-md:mx-4 ">
-        
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="py-10 md:px-6 px-5 shadow-[0px_4px_25px_0px_rgba(0,0,0,0.05)] rounded-2xl border border-border"
